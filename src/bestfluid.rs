@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-pub const N: i32 = 64;
+pub const N: i32 = 3;
 
 pub fn IX(i: i32, j: i32) -> usize {
     (i + (N+2)*j) as usize
@@ -30,6 +30,13 @@ fn lin_solve(n: i32, b: i32, x: &mut Vec<f64>, x0: &mut Vec<f64>, a: f64, c: f64
     for k in 0..20 {
         for i in 1..=n {
             for j in 1..=n {
+                //println!("i: {}, j: {}, k: {}, n: {}", i, k, k, n);
+                //println!("x0[IX(i,j)]: {}", x0[IX(i,j)]);
+                //println!("x[IX(i-1,j)]: {}", x[IX(i-1,j)]);
+                //println!("x[IX(i+1,j)]: {}", x[IX(i+1,j)]);
+                //println!("x[IX(i,j-1)]: {}", x[IX(i,j-1)]);
+                //println!("x[IX(i,j+1)]: {}", x[IX(i,j+1)]);
+                //println!("BREAK");
                 x[IX(i,j)] = (x0[IX(i,j)] + a*(x[IX(i-1,j)]+x[IX(i+1,j)]+x[IX(i,j-1)]+x[IX(i,j+1)]))/c;
             }
         }
@@ -209,11 +216,16 @@ pub struct b_fluobj {
     diff: f64,
     visc: f64,
     n: i32,
-    size: i32,
+    pub size: i32,
 }
 
 impl b_fluobj {
     pub fn new(n: i32) -> Self {
+        //let mut n = n;
+        if n != N {
+            panic!("\nThe constant N (which represents size), and the \nsize argument passed are not the same, please fix, \n N: {}, n: {}\n", N, n);
+            //n = N;
+        }
         let mut f = b_fluobj {
             x: vnew(n),  /* x and x0 are density and previous density */
             x0: vnew(n),
@@ -221,12 +233,12 @@ impl b_fluobj {
             u0: vnew(n),
             v: vnew(n),
             v0: vnew(n),
-            diff: 0.5_f64,
-            visc: 0.5_f64,
+            diff: 0.1_f64,
+            visc: 0.1_f64,
             n: n,
             size: (n+2) * (n+2),
         };
-        f.x0[28] = 100_f64;
+        //f.x0[12] = 100_f64;
         return f;
     }
 
@@ -255,9 +267,18 @@ impl b_fluobj {
         dens_step(self.n, &mut self.x, &mut self.x0, &mut self.u, &mut self.v, self.diff, dt);
     }
 
+    pub fn update_self(&mut self, dt: f64) {
+        self.vel_step_self(dt);
+        self.dens_step_self(dt);
+        self.clear_prev_vals();
+        
+    }
+    
+
     
 }
 
 fn vnew(n: i32) -> Vec<f64> {
+    //println!("Size = {}", (n+2)*(n+2));
     vec![0_f64; ((n+2) * (n+2)) as usize]
 }
